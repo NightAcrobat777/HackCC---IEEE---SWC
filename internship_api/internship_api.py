@@ -9,14 +9,15 @@ from flask_cors import CORS
 import json
 import os
 from datetime import datetime
-from fetch_and_clone_internships import InternshipFetcher
+from .fetch_and_clone_internships import InternshipFetcher
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Configuration
-INTERNSHIPS_FILE = '2026_internships.json'
-STEM_INTERNSHIPS_FILE = 'stem_internships.json'
+# Configuration - use paths relative to project root
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+INTERNSHIPS_FILE = os.path.join(BASE_DIR, '2026_internships.json')
+STEM_INTERNSHIPS_FILE = os.path.join(BASE_DIR, 'stem_internships.json')
 
 
 def load_internships():
