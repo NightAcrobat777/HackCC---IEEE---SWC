@@ -23,16 +23,23 @@ A comprehensive platform for California community college students with AI-power
 │   │   ├── scraper.py                  # assist.org scraper
 │   │   ├── fetch_and_clone_internships.py
 │   │   ├── internship_scraper.py
-│   │   └── colleges.json
+│   │   ├── colleges.json
+│   │   ├── QUICK_REFERENCE.md          # Quick reference guide
+│   │   └── API_DOCUMENTATION.md        # Detailed API documentation
 │   ├── mentorship_api/                 # Mentorship module
 │   │   └── mentorship_api.py
 │   ├── mentorship_scraper.py           # Mentorship data scraper
 │   ├── API.md                          # Complete API documentation
-│   └── QUICK_REFERENCE.md              # Quick reference guide
+│   └── scraper.py                      # Transfer scraper utility
 ├── llm-chat-app-template/              # Chat interface frontend
 ├── README.md                           # This file
-├── CLAUDE.md                           # Development notes
-└── venv/                               # Python virtual environment
+├── 2026_internships.json               # Internship data
+├── stem_internships.json               # STEM-specific internships
+├── mentorship_opportunities.json       # Mentorship data
+├── colleges.json                       # College data
+├── venv/                               # Python virtual environment
+├── requirements.txt                    # Python dependencies
+└── .gitignore                          # Git ignore patterns
 ```
 
 ## Quick Start
@@ -40,19 +47,22 @@ A comprehensive platform for California community college students with AI-power
 ### Setup
 
 ```bash
-cd /home/eli/HackCC---IEEE---SWC/apis
-source ../venv/bin/activate
+cd /home/eli/HackCC---IEEE---SWC
+source venv/bin/activate
 ```
 
 ### Start the Unified API Server
 
 ```bash
-./venv/bin/python3 api.py
+cd apis
+python3 api.py
 ```
 
 Server runs on **`http://localhost:5000`**
 
 API documentation available at: **`http://localhost:5000/`**
+
+**Note**: The API expects data files (`2026_internships.json`, `stem_internships.json`, `mentorship_opportunities.json`, `colleges.json`) to be in the `apis/` directory. Copy them from the root directory if needed.
 
 ## API Endpoints Overview
 
@@ -92,7 +102,7 @@ API documentation available at: **`http://localhost:5000/`**
 
 ```bash
 cd apis
-./venv/bin/python3 example_api_test.py
+python3 example_api_test.py
 ```
 
 This tests all endpoints across transfers, internships, and mentorships.
@@ -183,19 +193,16 @@ See `llm-chat-app-template/README.md` for full setup and deployment instructions
 ### Linting
 
 ```bash
-./venv/bin/python3 -m flake8 apis/api.py --max-line-length=100
+cd apis
+python3 -m flake8 api.py --max-line-length=100
 ```
 
 ### Running Tests
 
 ```bash
 cd apis
-./venv/bin/python3 example_api_test.py
+python3 example_api_test.py
 ```
-
-### Project Notes
-
-See `CLAUDE.md` for development guidelines and function references.
 
 ## Architecture
 
