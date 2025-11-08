@@ -1,31 +1,34 @@
 #!/usr/bin/env python3
-"""
-Flask REST API for serving internship data
-Provides endpoints to query and filter internships from the fetch_and_clone_internships script
-"""
 
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from .scraper import get_degree_information
+from .fetch_and_clone_internships import InternshipFetcher
+from datetime import datetime
 import json
 import os
-from datetime import datetime
-from fetch_and_clone_internships import InternshipFetcher
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Configuration
-INTERNSHIPS_FILE = '2026_internships.json'
-STEM_INTERNSHIPS_FILE = 'stem_internships.json'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+COLLEGES_FILE = os.path.join(os.path.dirname(__file__), 'colleges.json')
+INTERNSHIPS_FILE = os.path.join(BASE_DIR, '2026_internships.json')
+STEM_INTERNSHIPS_FILE = os.path.join(BASE_DIR, 'stem_internships.json')
+
+with open(COLLEGES_FILE, 'r') as f:
+    colleges_data = json.load(f)
+
+COLLEGES = colleges_data.get('from_institution', []) + colleges_data.get('transfer_institution', [])
+COLLEGES = list(set(COLLEGES))
+COLLEGES.sort()
 
 
 def load_internships():
-    """Load internships from JSON file"""
     if os.path.exists(INTERNSHIPS_FILE):
         try:
             with open(INTERNSHIPS_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data
+                return json.load(f)
         except Exception as e:
             print(f"Error loading {INTERNSHIPS_FILE}: {e}")
             return None
@@ -33,7 +36,6 @@ def load_internships():
 
 
 def load_stem_internships():
-    """Load STEM internships from JSON file"""
     if os.path.exists(STEM_INTERNSHIPS_FILE):
         try:
             with open(STEM_INTERNSHIPS_FILE, 'r', encoding='utf-8') as f:
@@ -44,38 +46,92 @@ def load_stem_internships():
     return None
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def home():
-    """API documentation endpoint"""
     return jsonify({
-        'message': 'Internship API',
+        'message': 'Combined HackCC API',
         'version': '1.0',
-        'endpoints': {
-            'GET /': 'API documentation',
-            'GET /api/internships': 'Get all internships with optional filters',
-            'GET /api/internships/<int:id>': 'Get specific internship by index',
-            'GET /api/internships/stats': 'Get statistics about internships',
-            'GET /api/internships/companies': 'Get list of all companies',
-            'GET /api/internships/locations': 'Get list of all locations',
-            'GET /api/internships/categories': 'Get list of all categories',
-            'GET /api/stem-internships': 'Get STEM-specific internships',
-            'POST /api/refresh': 'Refresh internship data from source repository'
+        'description': 'Unified API for college transfer programs and internship listings',
+        'sections': {
+            'transfer': {
+                'base': '/api/transfer',
+                'endpoints': {
+                    'POST /api/transfer/check': 'Check transfer compatibility between schools',
+                    'GET /api/transfer/schools': 'Search/list available colleges'
+                }
+            },
+            'internships': {
+                'base': '/api/internships',
+                'endpoints': {
+                    'GET /api/internships': 'Get all internships with optional filters',
+                    'GET /api/internships/<id>': 'Get specific internship by index',
+                    'GET /api/internships/stats': 'Get internship statistics',
+                    'GET /api/internships/companies': 'Get all companies',
+                    'GET /api/internships/locations': 'Get all locations',
+                    'GET /api/internships/categories': 'Get all categories',
+                    'GET /api/stem-internships': 'Get STEM-specific internships',
+                    'POST /api/internships/refresh': 'Refresh internship data'
+                }
+            }
         },
         'query_parameters': {
             '/api/internships': {
                 'category': 'Filter by category (FAANG+, Quant, Other)',
-                'company': 'Filter by company name (case-insensitive partial match)',
-                'location': 'Filter by location (case-insensitive partial match)',
-                'limit': 'Limit number of results',
-                'offset': 'Skip first N results'
+                'company': 'Filter by company name',
+                'location': 'Filter by location',
+                'limit': 'Limit results',
+                'offset': 'Pagination offset'
+            },
+            '/api/transfer/schools': {
+                'q': 'Search query for college names'
             }
         }
-    })
+    }), 200
+
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok'}), 200
+
+
+@app.route('/api/transfer/check', methods=['POST'])
+def check_transfer():
+    try:
+        data = request.get_json()
+        from_school = data.get('from_school', '').strip()
+        to_school = data.get('to_school', '').strip()
+
+        if not from_school or not to_school:
+            return jsonify({
+                'error': 'Missing required fields: from_school and to_school'
+            }), 400
+
+        result = get_degree_information(from_school, to_school)
+        return jsonify(result), 200 if not result.get('error') else 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/transfer/schools', methods=['GET'])
+def search_schools():
+    try:
+        query = request.args.get('q', '').lower().strip()
+
+        if not query:
+            return jsonify({'schools': COLLEGES}), 200
+
+        matches = [c for c in COLLEGES if query in c.lower()]
+        matches = matches[:10]
+
+        return jsonify({'schools': matches}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/internships', methods=['GET'])
 def get_internships():
-    """Get all internships with optional filtering"""
     data = load_internships()
 
     if not data:
@@ -83,26 +139,21 @@ def get_internships():
 
     internships = data.get('internships', [])
 
-    # Apply filters
     category = request.args.get('category', '').strip()
     company = request.args.get('company', '').strip().lower()
     location = request.args.get('location', '').strip().lower()
     limit = request.args.get('limit', type=int)
     offset = request.args.get('offset', type=int, default=0)
 
-    # Filter by category
     if category:
         internships = [i for i in internships if i.get('category', '').lower() == category.lower()]
 
-    # Filter by company (partial match)
     if company:
         internships = [i for i in internships if company in i.get('company', '').lower()]
 
-    # Filter by location (partial match)
     if location:
         internships = [i for i in internships if location in i.get('location', '').lower()]
 
-    # Apply pagination
     total_count = len(internships)
     internships = internships[offset:]
     if limit:
@@ -119,7 +170,6 @@ def get_internships():
 
 @app.route('/api/internships/<int:index>', methods=['GET'])
 def get_internship_by_index(index):
-    """Get a specific internship by index"""
     data = load_internships()
 
     if not data:
@@ -135,7 +185,6 @@ def get_internship_by_index(index):
 
 @app.route('/api/internships/stats', methods=['GET'])
 def get_stats():
-    """Get statistics about internships"""
     data = load_internships()
 
     if not data:
@@ -143,25 +192,20 @@ def get_stats():
 
     internships = data.get('internships', [])
 
-    # Calculate statistics
     categories = {}
     companies = {}
     locations = {}
 
     for internship in internships:
-        # Count by category
         cat = internship.get('category', 'Unknown')
         categories[cat] = categories.get(cat, 0) + 1
 
-        # Count by company
         comp = internship.get('company', 'Unknown')
         companies[comp] = companies.get(comp, 0) + 1
 
-        # Count by location
         loc = internship.get('location', 'Unknown')
         locations[loc] = locations.get(loc, 0) + 1
 
-    # Sort by count
     top_companies = sorted(companies.items(), key=lambda x: x[1], reverse=True)[:10]
     top_locations = sorted(locations.items(), key=lambda x: x[1], reverse=True)[:10]
 
@@ -176,7 +220,6 @@ def get_stats():
 
 @app.route('/api/internships/companies', methods=['GET'])
 def get_companies():
-    """Get list of all unique companies"""
     data = load_internships()
 
     if not data:
@@ -193,7 +236,6 @@ def get_companies():
 
 @app.route('/api/internships/locations', methods=['GET'])
 def get_locations():
-    """Get list of all unique locations"""
     data = load_internships()
 
     if not data:
@@ -210,7 +252,6 @@ def get_locations():
 
 @app.route('/api/internships/categories', methods=['GET'])
 def get_categories():
-    """Get list of all categories"""
     data = load_internships()
 
     if not data:
@@ -227,13 +268,11 @@ def get_categories():
 
 @app.route('/api/stem-internships', methods=['GET'])
 def get_stem_internships():
-    """Get STEM-specific internships"""
     data = load_stem_internships()
 
     if not data:
         return jsonify({'error': 'No STEM internship data available'}), 404
 
-    # Apply filters
     major = request.args.get('major', '').strip().lower()
     company = request.args.get('company', '').strip().lower()
     limit = request.args.get('limit', type=int)
@@ -241,15 +280,12 @@ def get_stem_internships():
 
     internships = data.get('internships', [])
 
-    # Filter by major (partial match)
     if major:
         internships = [i for i in internships if major in i.get('major', '').lower()]
 
-    # Filter by company (partial match)
     if company:
         internships = [i for i in internships if company in i.get('company', '').lower()]
 
-    # Apply pagination
     total_count = len(internships)
     internships = internships[offset:]
     if limit:
@@ -265,21 +301,17 @@ def get_stem_internships():
     })
 
 
-@app.route('/api/refresh', methods=['POST'])
+@app.route('/api/internships/refresh', methods=['POST'])
 def refresh_data():
-    """Refresh internship data from the source repository"""
     try:
         fetcher = InternshipFetcher()
 
-        # Clone or update repository
         if not fetcher.clone_or_update_repo():
             return jsonify({'error': 'Failed to update repository'}), 500
 
-        # Fetch internships
         if not fetcher.fetch_internships():
             return jsonify({'error': 'Failed to fetch internships'}), 500
 
-        # Save to JSON
         if not fetcher.save_to_json():
             return jsonify({'error': 'Failed to save internships'}), 500
 
@@ -296,36 +328,13 @@ def refresh_data():
 
 @app.errorhandler(404)
 def not_found(error):
-    """Handle 404 errors"""
     return jsonify({'error': 'Endpoint not found'}), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
-    """Handle 500 errors"""
     return jsonify({'error': 'Internal server error'}), 500
 
 
 if __name__ == '__main__':
-    # Check if data files exist
-    if not os.path.exists(INTERNSHIPS_FILE):
-        print(f"Warning: {INTERNSHIPS_FILE} not found. Run fetch_and_clone_internships.py first.")
-
-    if not os.path.exists(STEM_INTERNSHIPS_FILE):
-        print(f"Warning: {STEM_INTERNSHIPS_FILE} not found.")
-
-    print("\n" + "="*80)
-    print("INTERNSHIP API SERVER")
-    print("="*80)
-    print("\nAPI Documentation available at: http://localhost:5001/")
-    print("Example endpoints:")
-    print("  - GET  http://localhost:5001/api/internships")
-    print("  - GET  http://localhost:5001/api/internships?category=FAANG+")
-    print("  - GET  http://localhost:5001/api/internships?company=google")
-    print("  - GET  http://localhost:5001/api/internships/stats")
-    print("  - GET  http://localhost:5001/api/stem-internships")
-    print("  - POST http://localhost:5001/api/refresh")
-    print("\n" + "="*80 + "\n")
-
-    # Run the Flask app
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5000)

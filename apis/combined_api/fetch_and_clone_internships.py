@@ -14,7 +14,9 @@ import subprocess
 
 class InternshipFetcher:
     def __init__(self):
-        self.repo_dir = "2026-SWE-College-Jobs"
+        # Use parent directory as base (project root)
+        self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.repo_dir = os.path.join(self.base_dir, "2026-SWE-College-Jobs")
         self.readme_path = os.path.join(self.repo_dir, "README.md")
         self.internships = []
 
@@ -196,6 +198,9 @@ class InternshipFetcher:
 
     def save_to_json(self, filename='2026_internships.json'):
         """Save internships to a JSON file"""
+        # Save to project root directory
+        filepath = os.path.join(self.base_dir, filename)
+
         output_data = {
             'metadata': {
                 'total_count': len(self.internships),
@@ -212,9 +217,9 @@ class InternshipFetcher:
         }
 
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(output_data, f, indent=2, ensure_ascii=False)
-            print(f"\n[+] Internships saved to {filename}")
+            print(f"\n[+] Internships saved to {filepath}")
             return True
         except Exception as e:
             print(f"[!] Error saving to JSON: {e}")

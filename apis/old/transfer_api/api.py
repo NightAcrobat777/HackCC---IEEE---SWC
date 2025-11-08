@@ -2,13 +2,17 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from scraper import get_degree_information
+from .scraper import get_degree_information
 import json
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-with open('colleges.json', 'r') as f:
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+COLLEGES_FILE = os.path.join(os.path.dirname(__file__), 'colleges.json')
+
+with open(COLLEGES_FILE, 'r') as f:
     colleges_data = json.load(f)
 
 COLLEGES = colleges_data.get('from_institution', []) + colleges_data.get('transfer_institution', [])
