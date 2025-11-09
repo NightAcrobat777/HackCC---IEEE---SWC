@@ -1,4 +1,4 @@
-# BetterTransfer - AI-Powered College Transfer Assistant
+# TransferReady - AI-Powered College Transfer Assistant
 
 An intelligent platform built for California community college students to navigate their transfer journey from community college to 4-year universities. Created by Gabe, Eli, Angelo, and Tim for the HackCC hackathon (IEEE HackCC 2025).
 
@@ -15,7 +15,7 @@ An intelligent platform built for California community college students to navig
 - **Profile Persistence**: Your selections are saved and used throughout the chat experience
 
 ### 🤖 **AI Transfer Assistant**
-- **Context-Aware Chat**: AI assistant with knowledge of your profile (community college, target schools, major)
+- **Context-Aware Chat**: TransferReady Assistant with knowledge of your profile (community college, target schools, major)
 - **Natural Language Queries**: Ask questions in plain English about your transfer journey
 - **Streaming Responses**: Real-time AI responses with markdown formatting support
 - **Quick Actions**: One-click access to common queries
@@ -72,7 +72,7 @@ An intelligent platform built for California community college students to navig
 │   └── scraper.py                      # Transfer scraper utility
 ├── llm-chat-app-template/              # Frontend web application
 │   ├── public/                          # Static frontend assets
-│   │   ├── index.html                   # Main application UI (BetterTransfer interface)
+│   │   ├── index.html                   # Main application UI (TransferReady interface)
 │   │   ├── colleges.json                # California colleges database
 │   │   └── chat.js                      # Chat interface utilities
 │   ├── src/                             # TypeScript source code
@@ -176,7 +176,7 @@ npm run dev
 3. **Step 2 - Target Universities**: Select one or more target schools
 4. **Step 3 - Major**: Choose your intended major
 5. **Step 4 - Summary**: Review your selections
-6. **Chat Assistant**: Click "Chat with Transfer Assistant →" to start getting personalized help
+6. **Chat Assistant**: Click "Chat with TransferReady Assistant →" to start getting personalized help
 
 The AI assistant will use your profile to provide tailored advice on:
 - Transfer requirements and articulation agreements
@@ -452,7 +452,7 @@ See `llm-chat-app-template/README.md` for deployment instructions.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        BetterTransfer                           │
+│                        TransferReady                            │
 │                    (Frontend - index.html)                      │
 │                                                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
@@ -483,7 +483,7 @@ See `llm-chat-app-template/README.md` for deployment instructions.
 
 ### User Journey
 
-1. **Welcome** → User lands on BetterTransfer homepage
+1. **Welcome** → User lands on TransferReady homepage
 2. **Profile Setup** → 4-step guided form:
    - Current community college
    - Target universities (1+)
@@ -625,4 +625,4 @@ IEEE HackCC 2025
 
 ---
 
-**BetterTransfer** - Making college transfer journeys smoother, one student at a time. 🎓✨
+**TransferReady** - Making college transfer journeys smoother, one student at a time. 🎓✨
