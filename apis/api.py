@@ -18,10 +18,11 @@ app = Flask(__name__)
 CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PARENT_DIR = os.path.dirname(BASE_DIR)
 COLLEGES_FILE = os.path.join(BASE_DIR, 'combined_api', 'colleges.json')
-INTERNSHIPS_FILE = os.path.join(BASE_DIR, '2026_internships.json')
-STEM_INTERNSHIPS_FILE = os.path.join(BASE_DIR, 'stem_internships.json')
-MENTORSHIP_FILE = os.path.join(BASE_DIR, 'mentorship_opportunities.json')
+INTERNSHIPS_FILE = os.path.join(PARENT_DIR, '2026_internships.json')
+STEM_INTERNSHIPS_FILE = os.path.join(PARENT_DIR, 'stem_internships.json')
+MENTORSHIP_FILE = os.path.join(PARENT_DIR, 'mentorship_opportunities.json')
 
 with open(COLLEGES_FILE, 'r') as f:
     colleges_data = json.load(f)
