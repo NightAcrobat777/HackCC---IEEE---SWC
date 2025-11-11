@@ -581,7 +581,7 @@ The frontend can be deployed to:
 
 **Created for IEEE HackCC 2025 Hackathon**
 
-- **Gabe** - Frontend & UX Design
+- **Gabriel** - Frontend & UX Design
 - **Eli** - Backend API & assist.org Integration  
 - **Angelo** - Data Collection & Testing
 - **Tim** - AI Integration & Documentation
